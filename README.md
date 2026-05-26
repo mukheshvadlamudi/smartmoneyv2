@@ -87,20 +87,4 @@ Verify that the workspace compiles error-free under strict production guidelines
 npm run build
 ```
 
----
-
-## 🎨 Premium Onboarding bypass
-For swift investor demonstrations, the **Landing Page** includes a **"Skip Onboarding (Demo)"** button. 
-Clicking it bypasses setup flows and instantly launches the workspace pre-loaded with a beautiful high-earning profile:
-* **Monthly Salary**: ₹3,75,000 (~₹45 Lakhs per annum)
-* **Liquid Net Worth**: ₹3.6 Crore (`₹3.95 Crore` in diversified assets and `₹35 Lakhs` in outstanding home/car loan liabilities)
-
----
-
-## 👥 Corporate Stewardship
-Designed, polished, and maintained for **FutureLab Studios**.
-* **Branding Protocol**: Uniform corporate presentation strictly displaying `Smart Money — by FutureLab Studios`.
-* **Exclusion**: Clean workspace entirely void of operating system ("OS") labeling tags or device specific bindings.
-
----
 📅 *Smart Money — Refined for Premium Presentation. Ready for Vercel Deployment.*
