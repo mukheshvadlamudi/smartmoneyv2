@@ -1,0 +1,6 @@
+{
+  "name": "Smart Money",
+  "description": "AI-powered personal wealth operating system featuring cash-flow prediction, and future outcome simulation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
