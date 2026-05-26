@@ -97,25 +97,29 @@ export const initialFinancialState: UserFinancialState = {
       category: "Equity & Mutual Funds (Nifty 50 Index)",
       amount: 21500000, // 2.15 Cr
       risk: "high",
-      color: "rgba(167, 243, 208, 0.6)" // Soft pastel sage
+      color: "rgba(167, 243, 208, 0.6)", // Soft pastel sage
+      returnsPct: 15.4 // 15.4% CAGR
     },
     {
       category: "Liquid Emergency Cash (HDFC Savings)",
       amount: 5000000, // 50 Lakhs
       risk: "low",
-      color: "rgba(191, 219, 254, 0.6)" // Soft pastel blue
+      color: "rgba(191, 219, 254, 0.6)", // Soft pastel blue
+      returnsPct: 4.5 // 4.5% interest
     },
     {
       category: "Sovereign Gold Bonds (RBI Series)",
       amount: 3000000, // 30 Lakhs
       risk: "medium",
-      color: "rgba(254, 243, 199, 0.6)" // Soft beige
+      color: "rgba(254, 243, 199, 0.6)", // Soft beige
+      returnsPct: 8.2 // 8.2% CAGR
     },
     {
       category: "Commercial Real Estate Fund (Reit Index)",
       amount: 10000000, // 1.0 Crore
       risk: "medium",
-      color: "rgba(233, 213, 255, 0.6)" // Soft muted lavender
+      color: "rgba(233, 213, 255, 0.6)", // Soft muted lavender
+      returnsPct: 11.2 // 11.2% CAGR
     }
   ],
   transactions: [

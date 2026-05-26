@@ -37,6 +37,7 @@ export interface AssetAllocation {
   amount: number;
   risk: "low" | "medium" | "high";
   color: string;
+  returnsPct: number; // Annualized CAGR, e.g. 14.8
 }
 
 export interface Transaction {

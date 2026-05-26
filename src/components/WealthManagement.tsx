@@ -16,7 +16,8 @@ export default function WealthManagement({ financialState, setFinancialState }: 
     category: "",
     amount: 25000,
     risk: "medium" as AssetAllocation["risk"],
-    color: "rgba(167, 243, 208, 0.6)"
+    color: "rgba(167, 243, 208, 0.6)",
+    returnsPct: 12.0
   });
 
   const [selectedRiskFilter, setSelectedRiskFilter] = useState<"all" | "low" | "medium" | "high">("all");
@@ -36,7 +37,8 @@ export default function WealthManagement({ financialState, setFinancialState }: 
       category: newAsset.category,
       amount: Number(newAsset.amount),
       risk: newAsset.risk,
-      color: pickedColor
+      color: pickedColor,
+      returnsPct: Number(newAsset.returnsPct)
     };
 
     setFinancialState(prev => ({
@@ -49,7 +51,8 @@ export default function WealthManagement({ financialState, setFinancialState }: 
       category: "",
       amount: 25000,
       risk: "medium",
-      color: ""
+      color: "",
+      returnsPct: 12.0
     });
   };
 
@@ -254,10 +257,13 @@ export default function WealthManagement({ financialState, setFinancialState }: 
                         <span className="font-semibold text-xs text-slate-800 block leading-tight">{w.category}</span>
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className={`px-1.5 py-0.5 rounded text-[8px] uppercase font-mono font-semibold ${
-                            w.risk === "high" ? "bg-rose-55 bg-rose-50 text-rose-600" :
+                            w.risk === "high" ? "bg-rose-50 text-rose-600" :
                             w.risk === "medium" ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
                           }`}>
                             {w.risk} Risk Profile
+                          </span>
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[8px] font-mono font-bold">
+                            +{w.returnsPct}% CAGR
                           </span>
                         </div>
                       </div>

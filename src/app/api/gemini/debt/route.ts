@@ -38,7 +38,7 @@ Provide a detailed, actionable, and empathetic response about their debt situati
       return NextResponse.json(JSON.parse(text));
     } catch (err: any) {
       console.warn("Using offline fallback for debt advice:", err.message);
-      return NextResponse.json({ advice: getOfflineFallback(question, "debt") });
+      return NextResponse.json(JSON.parse(getOfflineFallback(question, "debt")));
     }
   } catch (error: any) {
     return NextResponse.json(

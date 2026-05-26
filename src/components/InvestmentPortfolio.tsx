@@ -14,8 +14,9 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAsset, setNewAsset] = useState({
     category: "",
-    amount: 50000,
-    risk: "medium" as AssetAllocation["risk"]
+    amount: 100000,
+    risk: "medium" as AssetAllocation["risk"],
+    returnsPct: 12.0
   });
 
   const [selectedRiskFilter, setSelectedRiskFilter] = useState<"all" | "low" | "medium" | "high">("all");
@@ -61,6 +62,7 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
       amount: Number(newAsset.amount),
       risk: newAsset.risk,
       color,
+      returnsPct: Number(newAsset.returnsPct)
     };
 
     setFinancialState((prev) => ({
@@ -69,7 +71,7 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
     }));
 
     setShowAddForm(false);
-    setNewAsset({ category: "", amount: 50000, risk: "medium" });
+    setNewAsset({ category: "", amount: 100000, risk: "medium", returnsPct: 12.0 });
   };
 
   const handleRemoveAsset = (category: string) => {
@@ -103,7 +105,7 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
       if (!res.ok) throw new Error("Request failed");
 
       const data = await res.json();
-      setAdvisorResponse(data.response || data.message || "No response received.");
+      setAdvisorResponse(data.advice || data.response || data.message || "No response received.");
     } catch {
       // Elegant customized fallback response tailored to mock data
       setAdvisorResponse(
@@ -247,26 +249,38 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
             </div>
 
             {/* Chart Legends */}
-            <div className="space-y-2.5 pt-4 border-t border-slate-100">
-              {financialState.wealth.map((w, idx) => (
-                <div key={idx} className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2 max-w-[70%]">
-                    <div 
-                      className="w-2.5 h-2.5 rounded-full shrink-0" 
-                      style={{ 
-                        backgroundColor: 
-                          w.risk === "high" ? "rgba(167, 243, 208, 0.9)" :
-                          w.risk === "medium" ? "rgba(254, 243, 199, 0.9)" :
-                          "rgba(191, 219, 254, 0.9)"
-                      }} 
-                    />
-                    <span className="font-light text-slate-600 truncate">{w.category}</span>
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              {financialState.wealth.map((w, idx) => {
+                const percentage = getAllocationPercent(w.amount);
+                return (
+                  <div key={idx} className="p-2.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100/40 rounded-xl transition-all">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full shrink-0" 
+                          style={{ 
+                            backgroundColor: 
+                              w.risk === "high" ? "rgba(167, 243, 208, 0.9)" :
+                              w.risk === "medium" ? "rgba(254, 243, 199, 0.9)" :
+                              "rgba(191, 219, 254, 0.9)"
+                          }} 
+                        />
+                        <span className="font-semibold text-slate-800 text-[11px] truncate">
+                          {w.category}
+                        </span>
+                      </div>
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[8px] font-mono font-bold shrink-0">
+                        +{w.returnsPct}% Return
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-1.5 pl-4 text-[10px] text-slate-500 font-mono">
+                      <span>₹{w.amount.toLocaleString()}</span>
+                      <span className="text-slate-400 font-semibold">{percentage}% Share</span>
+                    </div>
                   </div>
-                  <span className="font-mono text-slate-400 text-right shrink-0">
-                    ₹{w.amount.toLocaleString()} ({getAllocationPercent(w.amount)}%)
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
           </div>
@@ -328,7 +342,7 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
 
             {/* Asset Adder Form Block */}
             {showAddForm && (
-              <form onSubmit={handleAddAsset} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <form onSubmit={handleAddAsset} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="space-y-1">
                   <label className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 font-mono">Asset Label</label>
                   <input 
@@ -354,6 +368,18 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
                   </select>
                 </div>
 
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 font-mono">Annual Return (%)</label>
+                  <input 
+                    type="number"
+                    step="0.1"
+                    required
+                    value={newAsset.returnsPct}
+                    onChange={(e) => setNewAsset({ ...newAsset, returnsPct: parseFloat(e.target.value) || 0.0 })}
+                    className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none bg-white text-xxs text-slate-800 font-mono font-semibold"
+                  />
+                </div>
+
                 <div className="space-y-1 flex flex-col justify-between">
                   <label className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 font-mono">Amount (₹)</label>
                   <div className="flex gap-2">
@@ -366,7 +392,7 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
                     />
                     <button 
                       type="submit"
-                      className="px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xxs font-semibold cursor-pointer"
+                      className="px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xxs font-semibold cursor-pointer shrink-0"
                     >
                       Save
                     </button>
@@ -387,25 +413,32 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
                   return (
                     <div key={i} className="flex justify-between items-center p-3.5 bg-[#FBFBFD] border border-slate-100 hover:border-slate-200/80 rounded-2xl transition-all">
                       
-                      <div className="flex items-center gap-3 max-w-[60%]">
+                      <div className="flex items-center gap-3 max-w-[65%] min-w-0 flex-1">
                         <div className="p-2 bg-slate-100 rounded-xl text-slate-800 shrink-0">
                           <Landmark className="w-4 h-4 text-slate-600" />
                         </div>
-                        <div>
-                          <span className="font-semibold text-xs text-slate-800 block truncate">{asset.category}</span>
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-mono font-bold mt-1 ${
-                            asset.risk === "high" ? "bg-rose-50 text-rose-600" :
-                            asset.risk === "medium" ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
-                          }`}>
-                            {asset.risk} Risk Profile
-                          </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-xs text-slate-800 truncate">{asset.category}</span>
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9px] font-mono font-bold shrink-0">
+                              +{asset.returnsPct}% CAGR
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-mono font-bold ${
+                              asset.risk === "high" ? "bg-rose-50 text-rose-600" :
+                              asset.risk === "medium" ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
+                            }`}>
+                              {asset.risk} Risk Profile
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <span className="font-mono text-xs font-bold text-slate-900 block">₹{asset.amount.toLocaleString()}</span>
-                          <span className="text-[9px] text-slate-400 font-mono block mt-0.5">{pct}% Share</span>
+                        <div className="text-right font-mono">
+                          <span className="text-xs font-bold text-slate-900 block">₹{asset.amount.toLocaleString()}</span>
+                          <span className="text-[9px] text-slate-400 block mt-0.5">{pct}% Share</span>
                         </div>
                         <button
                           onClick={() => handleRemoveAsset(asset.category)}

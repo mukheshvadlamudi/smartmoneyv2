@@ -40,7 +40,7 @@ Provide expert investment guidance with specific allocation suggestions, risk an
       return NextResponse.json(JSON.parse(text));
     } catch (err: any) {
       console.warn("Using offline fallback for investment advice:", err.message);
-      return NextResponse.json({ advice: getOfflineFallback(question, "investment") });
+      return NextResponse.json(JSON.parse(getOfflineFallback(question, "investment")));
     }
   } catch (error: any) {
     return NextResponse.json(
