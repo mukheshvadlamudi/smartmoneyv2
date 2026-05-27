@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { UserFinancialState, Debt } from "../types";
 import { 
   Sparkles, ShieldCheck, Zap, Compass, Calculator, Info, Check, 
-  HelpCircle, Landmark, Calendar, Percent, Send 
+  HelpCircle, Landmark, Calendar, Percent
 } from "lucide-react";
 
 interface DebtOptimizationProps {
@@ -13,6 +13,7 @@ interface DebtOptimizationProps {
 export default function DebtOptimization({ financialState, setFinancialState }: DebtOptimizationProps) {
   const [selectedStrategy, setSelectedStrategy] = useState<"avalanche" | "snowball">("avalanche");
   const [showAddDebt, setShowAddDebt] = useState(false);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [newDebt, setNewDebt] = useState({
     name: "",
     principal: 80000,
@@ -24,30 +25,42 @@ export default function DebtOptimization({ financialState, setFinancialState }: 
 
   const [simulationExtraRepayment, setSimulationExtraRepayment] = useState(5000);
 
-  const [debtQuestion, setDebtQuestion] = useState("");
-  const [debtAIResponse, setDebtAIResponse] = useState("");
-  const [isLoadingDebtAI, setIsLoadingDebtAI] = useState(false);
-
   const handleCreateDebtSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDebt.name.trim()) return;
 
-    const created: Debt = {
-      id: "debt_" + Date.now(),
-      name: newDebt.name,
-      principal: Number(newDebt.principal),
-      interestRate: Number(newDebt.interestRate),
-      emi: Number(newDebt.emi),
-      remainingMonths: Number(newDebt.remainingMonths),
-      category: newDebt.category
-    };
+    if (editingDebtId) {
+      setFinancialState(prev => ({
+        ...prev,
+        debts: prev.debts.map(d => d.id === editingDebtId ? {
+          ...d,
+          name: newDebt.name,
+          principal: Number(newDebt.principal),
+          interestRate: Number(newDebt.interestRate),
+          emi: Number(newDebt.emi),
+          remainingMonths: Number(newDebt.remainingMonths),
+          category: newDebt.category
+        } : d)
+      }));
+      setEditingDebtId(null);
+    } else {
+      const created: Debt = {
+        id: "debt_" + Date.now(),
+        name: newDebt.name,
+        principal: Number(newDebt.principal),
+        interestRate: Number(newDebt.interestRate),
+        emi: Number(newDebt.emi),
+        remainingMonths: Number(newDebt.remainingMonths),
+        category: newDebt.category
+      };
 
-    setFinancialState(prev => ({
-      ...prev,
-      debts: [...prev.debts, created],
-      // adjust health slightly representing new liability
-      healthScore: Math.max(30, prev.healthScore - 4)
-    }));
+      setFinancialState(prev => ({
+        ...prev,
+        debts: [...prev.debts, created],
+        // adjust health slightly representing new liability
+        healthScore: Math.max(30, prev.healthScore - 4)
+      }));
+    }
 
     setShowAddDebt(false);
     setNewDebt({
@@ -66,32 +79,6 @@ export default function DebtOptimization({ financialState, setFinancialState }: 
       debts: prev.debts.filter(d => d.id !== id),
       healthScore: Math.min(100, prev.healthScore + 3)
     }));
-  };
-
-  const handleAskDebtAI = async () => {
-    if (!debtQuestion.trim() || isLoadingDebtAI) return;
-    setIsLoadingDebtAI(true);
-    setDebtAIResponse("");
-    try {
-      const res = await fetch("/api/gemini/debt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userData: {
-            income: financialState.income,
-            spending: financialState.spending,
-            debts: financialState.debts,
-          },
-          question: debtQuestion,
-        }),
-      });
-      const data = await res.json();
-      setDebtAIResponse(data.advice || "No advice returned. Please try again.");
-    } catch {
-      setDebtAIResponse("Something went wrong while contacting the AI advisor. Please try again later.");
-    } finally {
-      setIsLoadingDebtAI(false);
-    }
   };
 
   const totalDebtsAmount = financialState.debts.reduce((acc, d) => acc + d.principal, 0);
@@ -114,7 +101,20 @@ export default function DebtOptimization({ financialState, setFinancialState }: 
         </div>
 
         <button
-          onClick={() => setShowAddDebt(prev => !prev)}
+          onClick={() => {
+            if (showAddDebt) {
+              setEditingDebtId(null);
+              setNewDebt({
+                name: "",
+                principal: 80000,
+                interestRate: 11.5,
+                emi: 3500,
+                remainingMonths: 24,
+                category: "personal-loan"
+              });
+            }
+            setShowAddDebt(prev => !prev);
+          }}
           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
         >
           <Zap className="w-3.5 h-3.5" />
@@ -198,10 +198,28 @@ export default function DebtOptimization({ financialState, setFinancialState }: 
 
           <div className="md:col-span-3 flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button 
+              type="button" 
+              onClick={() => {
+                setShowAddDebt(false);
+                setEditingDebtId(null);
+                setNewDebt({
+                  name: "",
+                  principal: 80000,
+                  interestRate: 11.5,
+                  emi: 3500,
+                  remainingMonths: 24,
+                  category: "personal-loan"
+                });
+              }}
+              className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 text-xs rounded-xl animate-fadeIn"
+            >
+              Discard
+            </button>
+            <button 
               type="submit"
               className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold"
             >
-              Add Liability Entry
+              {editingDebtId ? "Update Debt Parameters" : "Add Liability Entry"}
             </button>
           </div>
         </form>
@@ -356,12 +374,31 @@ export default function DebtOptimization({ financialState, setFinancialState }: 
                           <span className="font-mono text-xs font-semibold text-slate-800 block">₹{d.principal.toLocaleString()}</span>
                           <span className="text-[10px] text-slate-600 block font-mono mt-0.5">EMI: ₹{d.emi.toLocaleString()}</span>
                         </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingDebtId(d.id);
+                            setNewDebt({
+                              name: d.name,
+                              principal: d.principal,
+                              interestRate: d.interestRate,
+                              emi: d.emi,
+                              remainingMonths: d.remainingMonths,
+                              category: d.category
+                            });
+                            setShowAddDebt(true);
+                          }}
+                          className="px-3 py-1.5 border border-slate-200 hover:bg-indigo-50 hover:border-indigo-150 hover:text-indigo-600 rounded text-xxs font-light transition-all text-slate-500 cursor-pointer"
+                        >
+                          Edit
+                        </button>
                         <button
                           onClick={() => handleEraseDebt(d.id)}
                           className="px-3 py-1.5 border border-slate-200 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-500 rounded text-xxs font-light transition-all text-slate-500 cursor-pointer"
                         >
                           Settle Line
                         </button>
+                      </div>
                       </div>
                     </div>
                   ))
@@ -370,54 +407,6 @@ export default function DebtOptimization({ financialState, setFinancialState }: 
           </div>
         </div>
 
-      </div>
-
-      {/* AI Debt Advisor */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-500" />
-            AI Debt Advisor
-          </h3>
-          <p className="text-[12px] text-slate-500 font-light mt-1">
-            Ask any question about your debts — payoff timelines, interest calculations, strategy recommendations.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={debtQuestion}
-            onChange={(e) => setDebtQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && debtQuestion.trim() && !isLoadingDebtAI) {
-                handleAskDebtAI();
-              }
-            }}
-            placeholder="e.g., How fast can I clear my HDFC card debt?"
-            className="w-full p-3 border border-slate-200 rounded-xl text-[13px] focus:outline-slate-900"
-          />
-          <button
-            onClick={handleAskDebtAI}
-            disabled={!debtQuestion.trim() || isLoadingDebtAI}
-            className="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-
-        {isLoadingDebtAI && (
-          <div className="flex items-center gap-3 mt-4">
-            <div className="w-5 h-5 rounded-full border-2 border-slate-200 border-t-slate-900 animate-spin" />
-            <span className="text-[12px] text-slate-400">Analyzing your debt profile…</span>
-          </div>
-        )}
-
-        {debtAIResponse && !isLoadingDebtAI && (
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mt-4">
-            <p className="text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">{debtAIResponse}</p>
-          </div>
-        )}
       </div>
     </div>
   );

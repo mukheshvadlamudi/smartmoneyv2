@@ -19,7 +19,7 @@ The user is asking: "${question}"
 Provide a detailed, actionable, and empathetic response about their debt situation. Include specific numbers, timelines, and strategies when relevant. Keep your response concise (3-5 sentences) but packed with insight. Address the user directly.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: question,
         config: {
           systemInstruction: systemPrompt,

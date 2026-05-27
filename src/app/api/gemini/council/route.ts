@@ -26,7 +26,7 @@ Each value must be a concise (2-4 sentences) analytical, premium, tone-compatibl
 Do not return any markdown formatting outside the JSON block. Let the JSON output map strictly to the specified structure.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: "Advise based on my financial profile.",
         config: {
           systemInstruction: systemPrompt,

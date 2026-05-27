@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { UserFinancialState, Goal } from "../types";
 import { 
   Sparkles, Target, Calendar, Plus, ChevronRight, CheckCircle2, 
-  HelpCircle, Trash2, ArrowRightLeft, Compass, Info 
+  HelpCircle, Trash2, ArrowRightLeft, Compass, Info, Edit 
 } from "lucide-react";
 
 interface GoalsSystemProps {
@@ -12,6 +12,7 @@ interface GoalsSystemProps {
 
 export default function GoalsSystem({ financialState, setFinancialState }: GoalsSystemProps) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [newGoal, setNewGoal] = useState({
     name: "",
     type: "vacation" as Goal["type"],
@@ -37,23 +38,40 @@ export default function GoalsSystem({ financialState, setFinancialState }: Goals
     e.preventDefault();
     if (!newGoal.name.trim()) return;
 
-    const created: Goal = {
-      id: "g_" + Date.now(),
-      name: newGoal.name,
-      type: newGoal.type,
-      targetAmount: Number(newGoal.targetAmount),
-      currentAmount: 0,
-      monthlySavings: Number(newGoal.monthlySavings),
-      targetDate: newGoal.targetDate,
-      category: newGoal.category
-    };
+    if (editingGoalId) {
+      setFinancialState(prev => ({
+        ...prev,
+        goals: prev.goals.map(g => g.id === editingGoalId ? {
+          ...g,
+          name: newGoal.name,
+          type: newGoal.type,
+          targetAmount: Number(newGoal.targetAmount),
+          monthlySavings: Number(newGoal.monthlySavings),
+          targetDate: newGoal.targetDate,
+          category: newGoal.category
+        } : g)
+      }));
+      setEditingGoalId(null);
+    } else {
+      const created: Goal = {
+        id: "g_" + Date.now(),
+        name: newGoal.name,
+        type: newGoal.type,
+        targetAmount: Number(newGoal.targetAmount),
+        currentAmount: 0,
+        monthlySavings: Number(newGoal.monthlySavings),
+        targetDate: newGoal.targetDate,
+        category: newGoal.category
+      };
 
-    setFinancialState(prev => ({
-      ...prev,
-      goals: [...prev.goals, created]
-    }));
+      setFinancialState(prev => ({
+        ...prev,
+        goals: [...prev.goals, created]
+      }));
 
-    setSelectedGoalId(created.id);
+      setSelectedGoalId(created.id);
+    }
+
     setShowAddForm(false);
     setNewGoal({
       name: "",
@@ -106,7 +124,20 @@ export default function GoalsSystem({ financialState, setFinancialState }: Goals
         </div>
         
         <button
-          onClick={() => setShowAddForm(prev => !prev)}
+          onClick={() => {
+            if (showAddForm) {
+              setEditingGoalId(null);
+              setNewGoal({
+                name: "",
+                type: "vacation",
+                targetAmount: 50000,
+                monthlySavings: 3000,
+                targetDate: "2027-01-01",
+                category: "Experiences"
+              });
+            }
+            setShowAddForm(prev => !prev);
+          }}
           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 transition-colors shadow-sm self-start sm:self-center cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -179,7 +210,18 @@ export default function GoalsSystem({ financialState, setFinancialState }: Goals
           <div className="md:col-span-3 flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button 
               type="button" 
-              onClick={() => setShowAddForm(false)} 
+              onClick={() => {
+                setShowAddForm(false);
+                setEditingGoalId(null);
+                setNewGoal({
+                  name: "",
+                  type: "vacation",
+                  targetAmount: 50000,
+                  monthlySavings: 3000,
+                  targetDate: "2027-01-01",
+                  category: "Experiences"
+                });
+              }} 
               className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 text-xs rounded-xl"
             >
               Discard
@@ -188,7 +230,7 @@ export default function GoalsSystem({ financialState, setFinancialState }: Goals
               type="submit" 
               className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl"
             >
-              Compile & Save Goal
+              {editingGoalId ? "Update Goal Parameters" : "Compile & Save Goal"}
             </button>
           </div>
         </form>
@@ -213,17 +255,38 @@ export default function GoalsSystem({ financialState, setFinancialState }: Goals
                   }`}
                 >
                   <div className="flex justify-between items-start gap-2">
-                    <span className="font-semibold text-xs text-slate-800 truncate block max-w-[150px]">{g.name}</span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteGoal(g.id);
-                      }}
-                      className="p-1 text-slate-350 hover:text-rose-500 rounded transition-colors"
-                      title="Delete goal parameters"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <span className="font-semibold text-xs text-slate-800 truncate block max-w-[120px]">{g.name}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingGoalId(g.id);
+                          setNewGoal({
+                            name: g.name,
+                            type: g.type,
+                            targetAmount: g.targetAmount,
+                            monthlySavings: g.monthlySavings,
+                            targetDate: g.targetDate || "2027-01-01",
+                            category: g.category
+                          });
+                          setShowAddForm(true);
+                        }}
+                        className="p-1 text-slate-350 hover:text-indigo-600 rounded transition-colors"
+                        title="Edit goal parameters"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGoal(g.id);
+                        }}
+                        className="p-1 text-slate-350 hover:text-rose-500 rounded transition-colors"
+                        title="Delete goal parameters"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="flex justify-between text-xxs block text-slate-400 mt-1 font-mono">

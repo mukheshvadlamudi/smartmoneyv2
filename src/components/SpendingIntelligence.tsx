@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { UserFinancialState, Transaction } from "../types";
 import { 
   Sparkles, Coffee, ShoppingBag, Joystick, Moon, Heart, Compass, 
-  TrendingUp, RefreshCw, PlusCircle, AlertCircle, Info, Trash2
+  TrendingUp, RefreshCw, PlusCircle, AlertCircle, Info, Trash2,
+  Smartphone, Wallet, CheckCircle2, Home
 } from "lucide-react";
 
 interface SpendingIntelligenceProps {
@@ -12,11 +13,13 @@ interface SpendingIntelligenceProps {
 
 export default function SpendingIntelligence({ financialState, setFinancialState }: SpendingIntelligenceProps) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [customCategory, setCustomCategory] = useState("");
   const [newTx, setNewTx] = useState({
     merchant: "",
     category: "Food & Dining",
     amount: 500,
-    emotionalContext: "normal" as "" | Transaction["emotionalContext"]
+    emotionalContext: "normal" as "" | Transaction["emotionalContext"],
+    paymentMethod: "GPay" as "GPay" | "Cash"
   });
 
   const handleDeleteTransaction = (id: string) => {
@@ -35,13 +38,18 @@ export default function SpendingIntelligence({ financialState, setFinancialState
     e.preventDefault();
     if (!newTx.merchant.trim()) return;
 
+    const finalCategory = newTx.category === "Custom Tag..." 
+      ? (customCategory.trim() || "Custom Outlay") 
+      : newTx.category;
+
     const created: Transaction = {
       id: "tx_" + Date.now(),
       date: new Date().toISOString().split("T")[0],
       merchant: newTx.merchant,
-      category: newTx.category,
+      category: finalCategory,
       amount: Number(newTx.amount),
-      emotionalContext: newTx.emotionalContext || "normal"
+      emotionalContext: newTx.emotionalContext || "normal",
+      paymentMethod: newTx.paymentMethod
     };
 
     setFinancialState(prev => {
@@ -62,8 +70,10 @@ export default function SpendingIntelligence({ financialState, setFinancialState
       merchant: "",
       category: "Food & Dining",
       amount: 500,
-      emotionalContext: "normal"
+      emotionalContext: "normal",
+      paymentMethod: "GPay"
     });
+    setCustomCategory("");
   };
 
   const getEmotionalBadge = (context?: Transaction["emotionalContext"]) => {
@@ -84,10 +94,23 @@ export default function SpendingIntelligence({ financialState, setFinancialState
   const categories = [
     { key: "Food & Dining", color: "bg-amber-100 text-amber-700 hover:bg-amber-200" },
     { key: "Groceries", color: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" },
+    { key: "Rent & Housing", color: "bg-indigo-100 text-indigo-700 hover:bg-indigo-200" },
+    { key: "Utilities & Bills", color: "bg-slate-100 text-slate-700 hover:bg-slate-200" },
     { key: "Entertainment", color: "bg-rose-100 text-rose-700 hover:bg-rose-200" },
     { key: "Transport", color: "bg-blue-100 text-blue-700 hover:bg-blue-200" },
     { key: "Self Care", color: "bg-purple-100 text-purple-700 hover:bg-purple-200" },
   ];
+
+  const gpayTotal = financialState.transactions
+    .filter(t => !t.paymentMethod || t.paymentMethod === "GPay")
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const cashTotal = financialState.transactions
+    .filter(t => t.paymentMethod === "Cash")
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const totalSpent = gpayTotal + cashTotal;
+  const cashPercent = totalSpent > 0 ? Math.round((cashTotal / totalSpent) * 100) : 0;
 
   return (
     <div className="space-y-8">
@@ -109,7 +132,7 @@ export default function SpendingIntelligence({ financialState, setFinancialState
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAddTransactionSubmit} className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-md grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form onSubmit={handleAddTransactionSubmit} className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-md grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs text-slate-400 font-semibold uppercase font-mono">Merchant / Store</label>
             <input 
@@ -127,12 +150,23 @@ export default function SpendingIntelligence({ financialState, setFinancialState
             <select
               value={newTx.category}
               onChange={(e) => setNewTx({ ...newTx, category: e.target.value })}
-              className="w-full p-2.5 border border-slate-200 bg-white rounded-xl focus:outline-none text-xs text-slate-750"
+              className="w-full p-2.5 border border-slate-200 bg-white rounded-xl focus:outline-none text-xs text-slate-750 font-semibold"
             >
               {categories.map((cat) => (
                 <option key={cat.key} value={cat.key}>{cat.key}</option>
               ))}
+              <option value="Custom Tag...">Custom Tag...</option>
             </select>
+            {newTx.category === "Custom Tag..." && (
+              <input 
+                type="text" 
+                placeholder="Tag name (e.g. PG fees)"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                className="w-full mt-1.5 p-2 border border-slate-250 rounded-xl focus:outline-slate-900 text-xs text-slate-800 font-medium bg-slate-50/50 animate-fadeIn"
+                required
+              />
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -151,6 +185,18 @@ export default function SpendingIntelligence({ financialState, setFinancialState
           </div>
 
           <div className="space-y-1.5">
+            <label className="text-xs text-slate-400 font-semibold uppercase font-mono">Payment Method</label>
+            <select
+              value={newTx.paymentMethod}
+              onChange={(e) => setNewTx({ ...newTx, paymentMethod: e.target.value as "GPay" | "Cash" })}
+              className="w-full p-2.5 border border-slate-200 bg-white rounded-xl focus:outline-none text-xs text-slate-750 font-semibold"
+            >
+              <option value="GPay">📱 UPI / GPay</option>
+              <option value="Cash">💵 Cash</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
             <label className="text-xs text-slate-400 font-semibold uppercase font-mono">Amount (₹)</label>
             <div className="relative">
               <input 
@@ -164,7 +210,7 @@ export default function SpendingIntelligence({ financialState, setFinancialState
                 type="submit"
                 className="absolute right-1 top-1 bottom-1 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xxs font-button cursor-pointer"
               >
-                Log
+                Log Outlay
               </button>
             </div>
           </div>
@@ -195,6 +241,42 @@ export default function SpendingIntelligence({ financialState, setFinancialState
                 "Specialty Coffee outlays have risen 18% compared to the prior monthly cycle, predominantly triggered during late office stress windows."
               </p>
             </div>
+          </div>
+
+          {/* GPay vs Cash Leakage comparison */}
+          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 space-y-4 shadow-xs">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-800 font-mono border-b border-slate-100 pb-2 flex items-center gap-1.5">
+              <Wallet className="w-3.5 h-3.5 text-slate-500" />
+              Cash Leakage Audit
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-100/50 rounded-2xl text-left">
+                <span className="text-[9px] text-slate-400 block font-mono font-semibold uppercase">📱 UPI / GPay</span>
+                <span className="text-sm font-bold text-slate-800 font-mono block mt-1">₹{gpayTotal.toLocaleString()}</span>
+                <span className="text-[9px] text-slate-500 font-mono mt-0.5 block">{totalSpent > 0 ? Math.round((gpayTotal / totalSpent) * 100) : 0}% share</span>
+              </div>
+              <div className="p-3 bg-rose-50/40 border border-rose-100/40 rounded-2xl text-left">
+                <span className="text-[9px] text-rose-500 block font-mono font-semibold uppercase">💵 Untracked Cash</span>
+                <span className="text-sm font-bold text-rose-600 font-mono block mt-1">₹{cashTotal.toLocaleString()}</span>
+                <span className="text-[9px] text-rose-500 font-mono mt-0.5 block">{cashPercent}% share</span>
+              </div>
+            </div>
+            
+            {cashPercent > 10 ? (
+              <div className="p-3 bg-rose-50 border border-rose-100 rounded-2xl flex gap-2 text-xxs text-rose-700 leading-relaxed font-light">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                <p>
+                  <strong>Leakage Alert:</strong> Your Cash leakage is {cashPercent}%. Small outlays (auto, local tea, street vendors) often escape tracking and drain your wallet. Use GPay or log Cash outlays instantly!
+                </p>
+              </div>
+            ) : (
+              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl flex gap-2 text-xxs text-emerald-700 leading-relaxed font-light">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <p>
+                  <strong>Optimal tracking:</strong> Your Cash outlay ratio is safe at {cashPercent}%. UPI GPay tracking captured the majority of your cash flows digitally. Great job!
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="bg-white border border-slate-200/60 rounded-3xl p-6 space-y-4">
@@ -234,12 +316,23 @@ export default function SpendingIntelligence({ financialState, setFinancialState
                 <div key={t.id} className="p-3 bg-[#FBFBFD] border border-slate-100 hover:border-slate-200 rounded-xl flex items-center justify-between gap-4 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="p-2.5 rounded-xl bg-slate-100/70 text-slate-800 shrink-0">
-                      {t.category.includes("Dining") || t.category.includes("Coffee") ? <Coffee className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
+                      {t.category.match(/Rent|Housing|PG|Home/i) ? (
+                        <Home className="w-4 h-4 text-indigo-600" />
+                      ) : t.category.includes("Dining") || t.category.includes("Coffee") ? (
+                        <Coffee className="w-4 h-4" />
+                      ) : (
+                        <ShoppingBag className="w-4 h-4" />
+                      )}
                     </div>
                     <div className="truncate">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-slate-800 block truncate text-xs">{t.merchant}</span>
                         {getEmotionalBadge(t.emotionalContext)}
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-semibold font-mono ${
+                          t.paymentMethod === "Cash" ? "bg-rose-50 border border-rose-100 text-rose-700" : "bg-slate-100 border border-slate-200 text-slate-700"
+                        }`}>
+                          {t.paymentMethod === "Cash" ? "💵 Cash" : "📱 UPI"}
+                        </span>
                       </div>
                       <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">{t.date} • {t.category}</span>
                     </div>

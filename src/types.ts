@@ -47,6 +47,7 @@ export interface Transaction {
   category: string;
   amount: number;
   emotionalContext?: "stress-spending" | "impulse" | "normal" | "planned" | "weekend-spikes";
+  paymentMethod?: "GPay" | "Cash";
 }
 
 export interface Notification {
@@ -81,6 +82,7 @@ export interface UserFinancialState {
   transactions: Transaction[];
   notifications: Notification[];
   investmentTransactions: InvestmentTransaction[];
+  isDemo?: boolean;
 }
 
 

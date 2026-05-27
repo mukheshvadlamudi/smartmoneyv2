@@ -12,6 +12,7 @@ interface WealthManagementProps {
 
 export default function WealthManagement({ financialState, setFinancialState }: WealthManagementProps) {
   const [showAddAsset, setShowAddAsset] = useState(false);
+  const [editingAssetCategory, setEditingAssetCategory] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState({
     category: "",
     amount: 25000,
@@ -41,11 +42,20 @@ export default function WealthManagement({ financialState, setFinancialState }: 
       returnsPct: Number(newAsset.returnsPct)
     };
 
-    setFinancialState(prev => ({
-      ...prev,
-      wealth: [...prev.wealth, created]
-    }));
+    setFinancialState(prev => {
+      let updatedWealth = [...prev.wealth];
+      if (editingAssetCategory) {
+        updatedWealth = prev.wealth.map(w => w.category === editingAssetCategory ? created : w);
+      } else {
+        updatedWealth = [...prev.wealth, created];
+      }
+      return {
+        ...prev,
+        wealth: updatedWealth
+      };
+    });
 
+    setEditingAssetCategory(null);
     setShowAddAsset(false);
     setNewAsset({
       category: "",
@@ -85,7 +95,19 @@ export default function WealthManagement({ financialState, setFinancialState }: 
         </div>
 
         <button
-          onClick={() => setShowAddAsset(prev => !prev)}
+          onClick={() => {
+            if (showAddAsset) {
+              setEditingAssetCategory(null);
+              setNewAsset({
+                category: "",
+                amount: 25000,
+                risk: "medium",
+                color: "",
+                returnsPct: 12.0
+              });
+            }
+            setShowAddAsset(prev => !prev);
+          }}
           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -133,12 +155,31 @@ export default function WealthManagement({ financialState, setFinancialState }: 
             </div>
           </div>
 
-          <div className="md:col-span-1 flex items-end">
+          <div className="md:col-span-1 flex items-end gap-2">
+            {editingAssetCategory && (
+              <button 
+                type="button"
+                onClick={() => {
+                  setEditingAssetCategory(null);
+                  setShowAddAsset(false);
+                  setNewAsset({
+                    category: "",
+                    amount: 25000,
+                    risk: "medium",
+                    color: "",
+                    returnsPct: 12.0
+                  });
+                }}
+                className="px-3 py-2.5 border border-slate-200 hover:text-slate-800 text-slate-500 rounded-xl text-xs font-semibold font-sans tracking-tight transition-all cursor-pointer text-center"
+              >
+                Cancel
+              </button>
+            )}
             <button 
               type="submit"
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold font-sans tracking-tight transition-all cursor-pointer"
+              className={`${editingAssetCategory ? 'w-2/3' : 'w-full'} py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold font-sans tracking-tight transition-all cursor-pointer`}
             >
-              Add Asset To Balance Sheets
+              {editingAssetCategory ? "Update Asset" : "Add Asset To Balance Sheets"}
             </button>
           </div>
         </form>
@@ -274,12 +315,30 @@ export default function WealthManagement({ financialState, setFinancialState }: 
                         <span className="font-mono text-xs font-semibold text-slate-800 block">₹{w.amount.toLocaleString()}</span>
                         <span className="text-[9px] text-slate-400 font-mono italic block">{getFraction(w.amount)}% Share</span>
                       </div>
-                      <button
-                        onClick={() => handleEraseAsset(w.category)}
-                        className="p-1 px-2.5 border border-slate-200 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-500 rounded text-xxs font-light transition-all text-slate-500 cursor-pointer"
-                      >
-                        De-link
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingAssetCategory(w.category);
+                            setNewAsset({
+                              category: w.category,
+                              amount: w.amount,
+                              risk: w.risk,
+                              color: w.color,
+                              returnsPct: w.returnsPct
+                            });
+                            setShowAddAsset(true);
+                          }}
+                          className="p-1 px-2.5 border border-slate-200 hover:bg-indigo-50 hover:border-indigo-150 hover:text-indigo-600 rounded text-xxs font-light transition-all text-slate-500 cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleEraseAsset(w.category)}
+                          className="p-1 px-2.5 border border-slate-200 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-500 rounded text-xxs font-light transition-all text-slate-500 cursor-pointer"
+                        >
+                          De-link
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

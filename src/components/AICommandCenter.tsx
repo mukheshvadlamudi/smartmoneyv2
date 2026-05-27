@@ -19,19 +19,34 @@ export default function AICommandCenter({ financialState, setFinancialState, set
   const savingsRate = financialState.income > 0 ? Math.round((savings / financialState.income) * 100) : 0;
 
   // Static ratios based on standard mock data or calculated
-  const annualPremium = financialState.policies?.reduce((acc, p) => acc + p.premium * 12, 0) || 35500;
-  const lifeCover = financialState.policies?.filter(p => p.type === "life").reduce((acc, p) => acc + p.coverage, 0) || 13000000;
-  const healthCover = financialState.policies?.filter(p => p.type === "health").reduce((acc, p) => acc + p.coverage, 0) || 3000000;
+  const annualPremium = financialState.policies?.length > 0 
+    ? financialState.policies.reduce((acc, p) => acc + p.premium * 12, 0) 
+    : (financialState.isDemo ? 35500 : 0);
 
-  const emergencyFund = financialState.wealth.find(w => w.category.toLowerCase().includes("savings"))?.amount || 312000;
+  const lifeCover = financialState.policies?.length > 0 
+    ? financialState.policies.filter(p => p.type === "life").reduce((acc, p) => acc + p.coverage, 0) 
+    : (financialState.isDemo ? 13000000 : 0);
+
+  const healthCover = financialState.policies?.length > 0 
+    ? financialState.policies.filter(p => p.type === "health").reduce((acc, p) => acc + p.coverage, 0) 
+    : (financialState.isDemo ? 3000000 : 0);
+
+  const emergencyFund = financialState.wealth.find(w => w.category.toLowerCase().includes("savings"))?.amount 
+    || (financialState.isDemo ? 312000 : 0);
   const monthsCovered = financialState.spending > 0 ? Math.round(emergencyFund / financialState.spending) : 0;
 
   // Dynamic asset categories allocation calculations
-  const getCategoryMetrics = (catName: string, defaultVal: number, defaultPct: number, count: number, returnPct: string) => {
-    const matched = financialState.wealth.filter(w => w.category.toLowerCase().includes(catName.toLowerCase()) || (catName === "Equity" && w.category.toLowerCase().includes("stocks")));
-    const sum = matched.reduce((acc, w) => acc + w.amount, 0) || defaultVal;
-    const share = totalAssets > 0 ? Math.round((sum / totalAssets) * 100) : defaultPct;
-    return { sum, share, count, returnPct };
+  const getCategoryMetrics = (catName: string, defaultVal: number, defaultPct: number, defaultCount: number, returnPct: string) => {
+    const matched = financialState.wealth.filter(w => 
+      w.category.toLowerCase().includes(catName.toLowerCase()) || 
+      (catName.toLowerCase() === "equity" && w.category.toLowerCase().includes("stocks")) ||
+      (catName.toLowerCase() === "equity" && w.category.toLowerCase().includes("mutual"))
+    );
+    const sum = matched.length > 0 ? matched.reduce((acc, w) => acc + w.amount, 0) : (financialState.isDemo ? defaultVal : 0);
+    const share = totalAssets > 0 ? Math.round((sum / totalAssets) * 100) : (financialState.isDemo ? defaultPct : 0);
+    const count = matched.length > 0 ? matched.length : (financialState.isDemo ? defaultCount : 0);
+    const displayReturn = financialState.isDemo ? returnPct : (sum > 0 ? "+12.0%" : "0.0%");
+    return { sum, share, count, returnPct: displayReturn };
   };
 
   const assetCategories = [

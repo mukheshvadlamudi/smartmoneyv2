@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { UserFinancialState, AssetAllocation } from "../types";
 import { 
-  TrendingUp, PieChart, Plus, Trash2, Sparkles, Send, 
+  TrendingUp, PieChart, Plus, Trash2, Sparkles, 
   ArrowUpRight, Landmark, Info, ShieldCheck, HeartPulse
 } from "lucide-react";
 
@@ -20,11 +20,6 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
   });
 
   const [selectedRiskFilter, setSelectedRiskFilter] = useState<"all" | "low" | "medium" | "high">("all");
-
-  // AI Advisor state
-  const [advisorQuestion, setAdvisorQuestion] = useState("");
-  const [advisorResponse, setAdvisorResponse] = useState("");
-  const [advisorLoading, setAdvisorLoading] = useState(false);
 
   // Derived values
   const totalPortfolio = financialState.wealth.reduce((acc, w) => acc + w.amount, 0);
@@ -79,41 +74,6 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
       ...prev,
       wealth: prev.wealth.filter((w) => w.category !== category),
     }));
-  };
-
-  const handleAskAdvisor = async () => {
-    if (!advisorQuestion.trim() || advisorLoading) return;
-    setAdvisorLoading(true);
-    setAdvisorResponse("");
-
-    try {
-      const res = await fetch("/api/gemini/investment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userData: {
-            income: financialState.income,
-            spending: financialState.spending,
-            wealth: financialState.wealth,
-            debts: financialState.debts,
-            goals: financialState.goals,
-          },
-          question: advisorQuestion,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Request failed");
-
-      const data = await res.json();
-      setAdvisorResponse(data.advice || data.response || data.message || "No response received.");
-    } catch {
-      // Elegant customized fallback response tailored to mock data
-      setAdvisorResponse(
-        `Based on your total portfolio of ₹${totalPortfolio.toLocaleString()} and a monthly surplus of ₹${(financialState.income - financialState.spending).toLocaleString()}, your asset allocation is exceptionally strong. \n\nYou currently have a diversified mix across High Risk Equities (Nifty 50 Tracker), Liquid Emergency Cash, and Low/Medium risk Sovereign Bonds. I suggest channeling your ₹${monthlySIP.toLocaleString()} estimated monthly surplus directly into automated mutual fund index sweeps to compound your long-term wealth steadily.`
-      );
-    } finally {
-      setAdvisorLoading(false);
-    }
   };
 
   const filteredAssets = financialState.wealth.filter((w) => {
@@ -457,61 +417,6 @@ export default function InvestmentPortfolio({ financialState, setFinancialState 
           </div>
 
         </div>
-
-      </div>
-
-      {/* 4. Bottom Row: Dedicated AI Investment Companion */}
-      <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-xs">
-        
-        <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-          <div className="p-1.5 bg-violet-50 rounded-xl">
-            <Sparkles className="w-4 h-4 text-violet-600 animate-pulse" />
-          </div>
-          <div>
-            <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-800">Portfolio Investment Advisor</h3>
-            <p className="text-xxs text-slate-400 font-light mt-0.5">Submit portfolio balancing questions or trigger macro asset suggestions instantly.</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="e.g. Should I rebalance some of my commercial real estate holdings into dynamic mutual funds?"
-            value={advisorQuestion}
-            onChange={(e) => setAdvisorQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAskAdvisor();
-              }
-            }}
-            className="flex-1 p-3 border border-slate-200 bg-[#FBFBFD] focus:bg-white rounded-2xl focus:outline-slate-900 text-xs text-slate-800 font-medium placeholder:text-slate-350"
-          />
-          <button
-            onClick={handleAskAdvisor}
-            disabled={advisorLoading || !advisorQuestion.trim()}
-            className="px-5 py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white text-xs font-semibold rounded-2xl flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
-          >
-            {advisorLoading ? (
-              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Send className="w-3.5 h-3.5" />
-            )}
-            {advisorLoading ? "Compiling..." : "Query"}
-          </button>
-        </div>
-
-        {/* AI Answer prints beautifully DIRECTLY below the query box */}
-        {advisorResponse && (
-          <div className="mt-4 p-5 bg-[#FBFBFD] border border-slate-100 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
-              <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
-                {advisorResponse}
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
 

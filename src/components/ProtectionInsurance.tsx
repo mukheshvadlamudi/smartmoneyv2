@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { UserFinancialState, InsurancePolicy } from "../types";
 import { 
   ShieldCheck, HelpCircle, Sparkles, AlertTriangle, BookOpen, Clock, 
-  CheckCircle2, Info, ChevronRight, MessageSquare, Hourglass, Landmark, Plus 
+  CheckCircle2, Info, ChevronRight, Landmark, Plus 
 } from "lucide-react";
 
 interface ProtectionInsuranceProps {
@@ -12,6 +12,7 @@ interface ProtectionInsuranceProps {
 
 export default function ProtectionInsurance({ financialState, setFinancialState }: ProtectionInsuranceProps) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
   const [newPolicy, setNewPolicy] = useState({
     name: "",
     type: "health" as InsurancePolicy["type"],
@@ -22,38 +23,54 @@ export default function ProtectionInsurance({ financialState, setFinancialState 
   });
 
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(financialState.policies[0]?.id || null);
-  const [userQuestion, setUserQuestion] = useState("");
-  const [advisorState, setAdvisorState] = useState({
-    isLoading: false,
-    text: ""
-  });
 
   const handleCreatePolicySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPolicy.name.trim()) return;
 
-    const created: InsurancePolicy = {
-      id: "pol_" + Date.now(),
-      name: newPolicy.name,
-      type: newPolicy.type,
-      coverage: Number(newPolicy.coverage),
-      premium: Number(newPolicy.premium),
-      premiumFrequency: "monthly",
-      deductible: Number(newPolicy.deductible),
-      coPay: Number(newPolicy.coPay),
-      jargonKeyTerms: [
-        { term: "Deductible Split", explanation: "You pay terms up to the deductible limit, after which active coverage is valid." },
-        { term: "Co-Payment Portion", explanation: `The specific ${newPolicy.coPay}% ratio of final billed charges that you split.` }
-      ],
-      lapsedStatus: false
-    };
+    if (editingPolicyId) {
+      setFinancialState(prev => ({
+        ...prev,
+        policies: prev.policies.map(p => p.id === editingPolicyId ? {
+          ...p,
+          name: newPolicy.name,
+          type: newPolicy.type,
+          coverage: Number(newPolicy.coverage),
+          premium: Number(newPolicy.premium),
+          deductible: Number(newPolicy.deductible),
+          coPay: Number(newPolicy.coPay),
+          jargonKeyTerms: [
+            { term: "Deductible Split", explanation: "You pay terms up to the deductible limit, after which active coverage is valid." },
+            { term: "Co-Payment Portion", explanation: `The specific ${newPolicy.coPay}% ratio of final billed charges that you split.` }
+          ]
+        } : p)
+      }));
+      setEditingPolicyId(null);
+    } else {
+      const created: InsurancePolicy = {
+        id: "pol_" + Date.now(),
+        name: newPolicy.name,
+        type: newPolicy.type,
+        coverage: Number(newPolicy.coverage),
+        premium: Number(newPolicy.premium),
+        premiumFrequency: "monthly",
+        deductible: Number(newPolicy.deductible),
+        coPay: Number(newPolicy.coPay),
+        jargonKeyTerms: [
+          { term: "Deductible Split", explanation: "You pay terms up to the deductible limit, after which active coverage is valid." },
+          { term: "Co-Payment Portion", explanation: `The specific ${newPolicy.coPay}% ratio of final billed charges that you split.` }
+        ],
+        lapsedStatus: false
+      };
 
-    setFinancialState(prev => ({
-      ...prev,
-      policies: [...prev.policies, created]
-    }));
+      setFinancialState(prev => ({
+        ...prev,
+        policies: [...prev.policies, created]
+      }));
 
-    setSelectedPolicyId(created.id);
+      setSelectedPolicyId(created.id);
+    }
+
     setShowAddForm(false);
     setNewPolicy({
       name: "",
@@ -77,46 +94,6 @@ export default function ProtectionInsurance({ financialState, setFinancialState 
 
   const selectedPolicy = financialState.policies.find(p => p.id === selectedPolicyId);
 
-  const queryAIAdvisor = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPolicy || !userQuestion.trim()) return;
-
-    setAdvisorState({ isLoading: true, text: "" });
-
-    try {
-      const resp = await fetch("/api/gemini/insurance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          policy: selectedPolicy,
-          userQuestion: userQuestion
-        })
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        setAdvisorState({ isLoading: false, text: data.answer });
-      } else {
-        throw new Error("COUNCIL INS CODE FAILED");
-      }
-    } catch (err) {
-      setTimeout(() => {
-        // Fallback fallback text block
-        setAdvisorState({
-          isLoading: false,
-          text: `Regarding your query about **${selectedPolicy.name}** cover:\n\n1. **Simplifying the rule**: Your deductible is ₹${selectedPolicy.deductible}. This means you cover pre-costs first, then the policy pays the remainder up to the ₹${selectedPolicy.coverage.toLocaleString()} limit.\n2. **Action plan**: Save all original invoices, request a certificate of treatment/diagnosis immediately, and submit within 7 days via the portal. Since this is an offline run, please configure your system environment credentials to enable dynamic policy extraction and coverage gap assessment.`
-        });
-      }, 1000);
-    }
-  };
-
-  const quickQuestions = [
-    "What steps are needed to file an immediate claim?",
-    "Why does my co-pay ratio reduce total reimbursement?",
-    "If I get treated out-of-network, how are values paid?",
-    "Are pre-existing condition wait-periods active here?"
-  ];
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -128,7 +105,20 @@ export default function ProtectionInsurance({ financialState, setFinancialState 
         </div>
 
         <button
-          onClick={() => setShowAddForm(prev => !prev)}
+          onClick={() => {
+            if (showAddForm) {
+              setEditingPolicyId(null);
+              setNewPolicy({
+                name: "",
+                type: "health",
+                coverage: 500000,
+                premium: 1200,
+                deductible: 5000,
+                coPay: 10
+              });
+            }
+            setShowAddForm(prev => !prev);
+          }}
           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -211,10 +201,28 @@ export default function ProtectionInsurance({ financialState, setFinancialState 
 
           <div className="md:col-span-3 flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button 
+              type="button" 
+              onClick={() => {
+                setShowAddForm(false);
+                setEditingPolicyId(null);
+                setNewPolicy({
+                  name: "",
+                  type: "health",
+                  coverage: 500000,
+                  premium: 1200,
+                  deductible: 5000,
+                  coPay: 10
+                });
+              }}
+              className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 text-xs rounded-xl"
+            >
+              Discard
+            </button>
+            <button 
               type="submit"
               className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold"
             >
-              Add Protective Entry
+              {editingPolicyId ? "Update Policy Parameters" : "Add Protective Entry"}
             </button>
           </div>
         </form>
@@ -240,12 +248,32 @@ export default function ProtectionInsurance({ financialState, setFinancialState 
                 >
                   <div className="flex justify-between items-start gap-2">
                     <span className="font-semibold text-xs text-slate-800 truncate block max-w-[155px]">{p.name}</span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleErasePolicy(p.id); }}
-                      className="text-slate-300 hover:text-rose-550 hover:text-rose-500 rounded transition-colors text-xxs font-light"
-                    >
-                      Remove
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setEditingPolicyId(p.id);
+                          setNewPolicy({
+                            name: p.name,
+                            type: p.type,
+                            coverage: p.coverage,
+                            premium: p.premium,
+                            deductible: p.deductible,
+                            coPay: p.coPay
+                          });
+                          setShowAddForm(true);
+                        }}
+                        className="text-slate-350 hover:text-indigo-600 rounded transition-colors text-xxs font-light"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleErasePolicy(p.id); }}
+                        className="text-slate-350 hover:text-rose-500 rounded transition-colors text-xxs font-light"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex justify-between text-xxs block text-slate-600 mt-2 font-mono">
@@ -295,56 +323,6 @@ export default function ProtectionInsurance({ financialState, setFinancialState 
                   ))}
                 </div>
               </div>
-
-              {/* Claims Helper sandbox */}
-              <div className="border-t border-slate-150 pt-6 space-y-4">
-                <div className="flex gap-2 items-center">
-                  <Sparkles className="w-4 h-4 text-indigo-500" />
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-600 font-mono">Ask AI Claims Step Translator</h4>
-                </div>
-
-                <p className="text-slate-700 text-xs font-light leading-relaxed">
-                  Provide hospital diagnoses, gadget damage reasons, or rejection slips, and the advisor translates claims rules into dynamic checklist actions.
-                </p>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {quickQuestions.map((q, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setUserQuestion(q)}
-                      className="px-2.5 py-1 text-slate-700 hover:text-slate-800 border border-slate-200 bg-[#FBFBFD] rounded-lg text-xxs font-light transition-all cursor-pointer"
-                    >
-                      "{q}"
-                    </button>
-                  ))}
-                </div>
-
-                <form onSubmit={queryAIAdvisor} className="relative mt-2">
-                  <input 
-                    type="text" 
-                    placeholder="e.g., Hospital is asking for upfront 10K. Does copay cover this?"
-                    value={userQuestion}
-                    onChange={(e) => setUserQuestion(e.target.value)}
-                    className="w-full py-3.5 pl-4 pr-32 text-xs text-slate-800 border border-slate-200 bg-[#FBFBFD] focus:bg-white rounded-2xl focus:outline-slate-900 transition-colors shadow-xs"
-                  />
-                  <button 
-                    type="submit"
-                    disabled={advisorState.isLoading || !userQuestion.trim()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xxs font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    {advisorState.isLoading ? <Hourglass className="w-3.0 h-3.0 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5" />}
-                    Ask Guide
-                  </button>
-                </form>
-
-                {advisorState.text && (
-                  <div className="p-4 bg-indigo-50/20 border border-indigo-100 rounded-2xl mt-4">
-                    <span className="text-xxs uppercase tracking-wider font-semibold text-indigo-600 block mb-2 font-mono">Claims Guide Response</span>
-                    <p className="text-slate-700 text-xs font-light leading-relaxed whitespace-pre-wrap">{advisorState.text}</p>
-                  </div>
-                )}
-              </div>
-
             </div>
           ) : (
             <div className="bg-white border border-slate-200/60 rounded-3xl p-12 text-center flex flex-col justify-center items-center min-h-[300px]">

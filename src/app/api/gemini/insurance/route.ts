@@ -16,7 +16,7 @@ Explain clearly and objectively, with high supportive clarity:
 3. Step-by-step claims advice.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           systemInstruction: "You represent a warm, calm, intelligent Insurance AI advisor. Avoid long academic definitions; give simple bullet lists and support."

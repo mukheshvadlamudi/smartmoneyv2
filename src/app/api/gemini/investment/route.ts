@@ -21,7 +21,7 @@ The user is asking: "${question}"
 Provide expert investment guidance with specific allocation suggestions, risk analysis, and actionable next steps. Keep your response concise (3-5 sentences) but insightful. Address the user directly.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: question,
         config: {
           systemInstruction: systemPrompt,

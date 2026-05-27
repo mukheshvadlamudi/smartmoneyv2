@@ -129,7 +129,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "Starbucks Specialty Coffee",
       category: "Food & Dining",
       amount: 480,
-      emotionalContext: "stress-spending"
+      emotionalContext: "stress-spending",
+      paymentMethod: "GPay"
     },
     {
       id: "t2",
@@ -137,7 +138,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "Blinkit Late Night Snacks",
       category: "Groceries",
       amount: 850,
-      emotionalContext: "weekend-spikes"
+      emotionalContext: "weekend-spikes",
+      paymentMethod: "GPay"
     },
     {
       id: "t3",
@@ -145,7 +147,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "Swiggy Gourmet Dinner",
       category: "Food & Dining",
       amount: 1520,
-      emotionalContext: "weekend-spikes"
+      emotionalContext: "weekend-spikes",
+      paymentMethod: "GPay"
     },
     {
       id: "t4",
@@ -153,7 +156,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "Steam Games - Autumn Sale",
       category: "Entertainment",
       amount: 2499,
-      emotionalContext: "impulse"
+      emotionalContext: "impulse",
+      paymentMethod: "GPay"
     },
     {
       id: "t5",
@@ -161,7 +165,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "SGS Auto Monthly Fuel refill",
       category: "Transport",
       amount: 3500,
-      emotionalContext: "planned"
+      emotionalContext: "planned",
+      paymentMethod: "GPay"
     },
     {
       id: "t6",
@@ -169,7 +174,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "Gym Membership Installment",
       category: "Health & Fitness",
       amount: 2200,
-      emotionalContext: "normal"
+      emotionalContext: "normal",
+      paymentMethod: "GPay"
     },
     {
       id: "t7",
@@ -177,7 +183,8 @@ export const initialFinancialState: UserFinancialState = {
       merchant: "Urban Company Bedside Massage",
       category: "Self Care",
       amount: 1999,
-      emotionalContext: "stress-spending"
+      emotionalContext: "stress-spending",
+      paymentMethod: "GPay"
     }
   ],
   notifications: [
@@ -276,5 +283,6 @@ export const initialFinancialState: UserFinancialState = {
       units: 2000,
       currentPrice: 110.8
     }
-  ]
+  ],
+  isDemo: true
 };
