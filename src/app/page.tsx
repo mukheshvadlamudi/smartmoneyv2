@@ -11,12 +11,16 @@ import DebtOptimization from "../components/DebtOptimization";
 import AICouncil from "../components/AICouncil";
 import FinancialEncyclopedia from "../components/FinancialEncyclopedia";
 import InvestmentPortfolio from "../components/InvestmentPortfolio";
+import Tax80COptimizer from "../components/Tax80COptimizer";
+import TaxRegimeComparator from "../components/TaxRegimeComparator";
+import TaxAuditor from "../components/TaxAuditor";
+import TaxHarvestingAdvisor from "../components/TaxHarvestingAdvisor";
 
 import { initialFinancialState } from "../mockData";
 import { UserFinancialState } from "../types";
 import { 
   Sparkles, Landmark, LayoutDashboard, Compass, ChevronDown, 
-  ShieldCheck, Zap, BookOpen, AlertCircle, TrendingUp, PieChart, LogOut
+  ShieldCheck, Zap, BookOpen, AlertCircle, TrendingUp, PieChart, LogOut, Scale
 } from "lucide-react";
 
 export default function Page() {
@@ -46,6 +50,10 @@ export default function Page() {
           setFinancialState(initialFinancialState);
           localStorage.setItem("smart_money_financial_state", JSON.stringify(initialFinancialState));
         } else {
+          // Merge default investment transactions if they do not exist in the cached state schema
+          if (!parsed.investmentTransactions) {
+            parsed.investmentTransactions = initialFinancialState.investmentTransactions;
+          }
           setFinancialState(parsed);
         }
       } catch (err) {
@@ -81,33 +89,132 @@ export default function Page() {
     expenses: number;
     debts: number;
     priority: string;
+    isDemo?: boolean;
   }) => {
-    setFinancialState(prev => {
-      let scoreMultiplier = 70;
-      if (data.priority === "stability") scoreMultiplier = 82;
-      if (data.priority === "reduceDebt") scoreMultiplier = 64;
-
-      // Dynamically allocate user's liabilities inputs across existing home/car loan entries
-      const adjustedDebts = prev.debts.map((d, i) => {
-        if (i === 0) {
-          // Home Loan principal (remaining balance)
-          return { ...d, principal: Math.max(0, data.debts - 200000) };
+    if (data.isDemo) {
+      setFinancialState(initialFinancialState);
+    } else {
+      // Calculate dynamic goals based on selected keys
+      const customGoals = data.goals.map((gKey) => {
+        if (gKey === "emergency") {
+          return {
+            id: "g_emergency",
+            name: "Emergency Safety Net (12M)",
+            type: "emergency" as const,
+            targetAmount: data.expenses * 12,
+            currentAmount: Math.round((data.income - data.expenses) * 1.5),
+            monthlySavings: Math.round((data.income - data.expenses) * 0.4),
+            targetDate: "2027-05-31",
+            category: "Safety"
+          };
         }
-        if (i === 1) {
-          // Car Loan principal
-          return { ...d, principal: Math.min(data.debts, 200000) };
+        if (gKey === "vacation") {
+          return {
+            id: "g_vacation",
+            name: "Luxury Vacation Fund",
+            type: "vacation" as const,
+            targetAmount: 300000,
+            currentAmount: 0,
+            monthlySavings: Math.round((data.income - data.expenses) * 0.2),
+            targetDate: "2027-04-15",
+            category: "Experiences"
+          };
         }
-        return d;
+        if (gKey === "vehicle") {
+          return {
+            id: "g_vehicle",
+            name: "Premium EV Car Purchase",
+            type: "vehicle" as const,
+            targetAmount: 2500000,
+            currentAmount: 0,
+            monthlySavings: Math.round((data.income - data.expenses) * 0.3),
+            targetDate: "2027-12-15",
+            category: "Asset Creation"
+          };
+        }
+        if (gKey === "debt") {
+          return {
+            id: "g_debt",
+            name: "Debt Freedom Reserve",
+            type: "emergency" as const,
+            targetAmount: data.debts,
+            currentAmount: 0,
+            monthlySavings: Math.round((data.income - data.expenses) * 0.3),
+            targetDate: "2027-09-30",
+            category: "Stability"
+          };
+        }
+        return {
+          id: "g_retirement",
+          name: "Retirement Compound Net",
+          type: "retirement" as const,
+          targetAmount: 5000000,
+          currentAmount: 0,
+          monthlySavings: Math.round((data.income - data.expenses) * 0.3),
+          targetDate: "2046-12-31",
+          category: "Long-term Wealth"
+        };
       });
 
-      return {
-        ...prev,
+      // Calculate dynamic loan entry if debts > 0
+      const customDebts = data.debts > 0 ? [
+        {
+          id: "d_user_loan",
+          name: "Outstanding Personal Loan",
+          principal: data.debts,
+          interestRate: 9.5,
+          emi: Math.round(data.debts * 0.015),
+          remainingMonths: 120,
+          category: "personal-loan" as const
+        }
+      ] : [];
+
+      // Clean, dynamic wealth/assets representing only their starting liquid cash cushion!
+      const customWealth = [
+        {
+          category: "Liquid Cash (Bank Balance)",
+          amount: Math.round((data.income - data.expenses) * 2),
+          risk: "low" as const,
+          color: "rgba(191, 219, 254, 0.6)",
+          returnsPct: 4.0
+        }
+      ];
+
+      // Safe spend transaction history
+      const customTransactions = [
+        {
+          id: "t_user_1",
+          date: "2026-05-26",
+          merchant: "Grocery Supermarket",
+          category: "Groceries",
+          amount: 2450,
+          emotionalContext: "planned" as const
+        },
+        {
+          id: "t_user_2",
+          date: "2026-05-25",
+          merchant: "Local Coffee shop",
+          category: "Food & Dining",
+          amount: 180,
+          emotionalContext: "normal" as const
+        }
+      ];
+
+      const scoreMultiplier = data.priority === "stability" ? 82 : (data.priority === "reduceDebt" ? 64 : 70);
+
+      setFinancialState({
         income: data.income,
         spending: data.expenses,
+        savingStreak: 1,
         healthScore: scoreMultiplier,
         safeSpendDaily: Math.round((data.income - data.expenses) / 30),
         safeSpendWeekly: Math.round((data.income - data.expenses) / 4),
-        debts: adjustedDebts,
+        goals: customGoals,
+        debts: customDebts,
+        policies: [], // Starts with clean slate policies
+        wealth: customWealth,
+        transactions: customTransactions,
+        investmentTransactions: [], // Completely clean ledger, loaded dynamically or manually inside dashboards
         notifications: [
           {
             id: "onb_notif",
@@ -115,11 +222,10 @@ export default function Page() {
             body: `Your profile priority is set to [${data.priority}]. Dynamic safe-spending calculations and personalized advisor suggestions are prepared.`,
             type: "success",
             time: "Just now"
-          },
-          ...prev.notifications
+          }
         ]
-      };
-    });
+      });
+    }
     setOnboarded(true);
     setCurrentTab("dashboard");
   };
@@ -156,6 +262,10 @@ export default function Page() {
       case "learn": return "Financial Encyclopedia";
       case "investments": return "Investment Portfolio";
       case "wealth": return "Wealth Management";
+      case "tax-80c": return "80C Tax Optimizer";
+      case "tax-regime": return "Old vs New Tax Regime";
+      case "tax-auditor": return "LTCG/STCG Tax Auditor";
+      case "tax-harvest": return "Tax Harvesting Advisor";
       default: return "Dashboard";
     }
   };
@@ -297,6 +407,59 @@ export default function Page() {
             Advisors
           </button>
 
+          {/* Item 5.5: Tax Suite */}
+          <div 
+            className="relative"
+            onMouseEnter={() => setHoveredFolder("tax")}
+            onMouseLeave={() => setHoveredFolder(null)}
+          >
+            <button
+              className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                currentTab.startsWith("tax-")
+                  ? "bg-slate-900 text-white shadow-sm" 
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100/70"
+              }`}
+            >
+              Tax Suite
+              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${hoveredFolder === "tax" ? "rotate-180" : ""}`} />
+            </button>
+
+            {hoveredFolder === "tax" && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2">
+                <div className="w-56 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-xl py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                  <button
+                    onClick={() => { setCurrentTab("tax-80c"); setHoveredFolder(null); }}
+                    className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-2.5 cursor-pointer rounded-lg mx-0"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-500" />
+                    80C Tax Optimizer
+                  </button>
+                  <button
+                    onClick={() => { setCurrentTab("tax-regime"); setHoveredFolder(null); }}
+                    className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-2.5 cursor-pointer rounded-lg mx-0"
+                  >
+                    <Scale className="w-4 h-4 text-indigo-500" />
+                    Old vs New Regime
+                  </button>
+                  <button
+                    onClick={() => { setCurrentTab("tax-auditor"); setHoveredFolder(null); }}
+                    className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-2.5 cursor-pointer rounded-lg mx-0"
+                  >
+                    <PieChart className="w-4 h-4 text-rose-500" />
+                    LTCG/STCG Auditor
+                  </button>
+                  <button
+                    onClick={() => { setCurrentTab("tax-harvest"); setHoveredFolder(null); }}
+                    className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-2.5 cursor-pointer rounded-lg mx-0"
+                  >
+                    <TrendingUp className="w-4 h-4 text-amber-500" />
+                    Tax Harvesting
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Item 6: Academy - Direct link (single subsection) */}
           <button
             onClick={() => { setCurrentTab("learn"); setHoveredFolder(null); }}
@@ -427,6 +590,26 @@ export default function Page() {
               financialState={financialState}
               setFinancialState={setFinancialState}
             />
+          )}
+
+          {/* TAB 10: 80C Tax Optimizer */}
+          {currentTab === "tax-80c" && (
+            <Tax80COptimizer financialState={financialState} />
+          )}
+
+          {/* TAB 11: Old vs New Tax Regime Comparator */}
+          {currentTab === "tax-regime" && (
+            <TaxRegimeComparator financialState={financialState} />
+          )}
+
+          {/* TAB 12: LTCG/STCG Tax Auditor */}
+          {currentTab === "tax-auditor" && (
+            <TaxAuditor financialState={financialState} setFinancialState={setFinancialState} />
+          )}
+
+          {/* TAB 13: Tax Harvesting Advisor */}
+          {currentTab === "tax-harvest" && (
+            <TaxHarvestingAdvisor financialState={financialState} setFinancialState={setFinancialState} />
           )}
 
         </div>

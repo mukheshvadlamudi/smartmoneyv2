@@ -13,6 +13,7 @@ interface OnboardingData {
   debts: number;
   priority: string;
   name: string;
+  isDemo?: boolean;
 }
 
 interface LandingPageProps {
@@ -37,7 +38,7 @@ export default function LandingPage({ onCompleteOnboarding }: LandingPageProps) 
     setStep(1);
   };
 
-  // Skip Onboarding directly loads with premium default mock values
+  // Skip Onboarding directly loads with premium default mock values (Demo Mode)
   const handleSkipOnboarding = () => {
     onCompleteOnboarding({
       name: "Mukhesh",
@@ -46,7 +47,8 @@ export default function LandingPage({ onCompleteOnboarding }: LandingPageProps) 
       income: 375000,
       expenses: 120000,
       debts: 3500000,
-      priority: "stability"
+      priority: "stability",
+      isDemo: true
     });
   };
 
@@ -54,7 +56,7 @@ export default function LandingPage({ onCompleteOnboarding }: LandingPageProps) 
     if (step < 8) {
       setStep(prev => prev + 1);
     } else {
-      onCompleteOnboarding(formData);
+      onCompleteOnboarding({ ...formData, isDemo: false });
     }
   };
 

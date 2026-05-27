@@ -202,5 +202,79 @@ export const initialFinancialState: UserFinancialState = {
       type: "success",
       time: "3 days ago"
     }
+  ],
+  investmentTransactions: [
+    {
+      id: "it1",
+      assetName: "Parag Parikh Flexi Cap Fund (Equity)",
+      assetType: "equity",
+      purchaseDate: "2024-11-12",
+      purchasePrice: 62.5,
+      units: 2400,
+      currentPrice: 94.8
+    },
+    {
+      id: "it2",
+      assetName: "Mirae Asset Large Cap Fund (Equity)",
+      assetType: "equity",
+      purchaseDate: "2025-03-05",
+      purchasePrice: 110.0,
+      units: 1500,
+      currentPrice: 152.4
+    },
+    {
+      id: "it3",
+      assetName: "Nifty 50 Index Fund (Equity Direct)",
+      assetType: "equity",
+      purchaseDate: "2026-01-20",
+      purchasePrice: 210.0,
+      units: 1000,
+      currentPrice: 228.5
+    },
+    {
+      id: "it4",
+      assetName: "HDFC Small Cap Fund (Equity)",
+      assetType: "equity",
+      purchaseDate: "2023-11-20",
+      purchasePrice: 85.0,
+      units: 1200,
+      currentPrice: 142.5
+    },
+    {
+      id: "it5",
+      assetName: "ICICI Prudential Debt Direct Fund (Debt)",
+      assetType: "debt",
+      purchaseDate: "2024-05-10",
+      purchasePrice: 100.0,
+      units: 4000,
+      currentPrice: 115.2
+    },
+    {
+      id: "it6",
+      assetName: "Nippon India Low Duration Fund (Debt)",
+      assetType: "debt",
+      purchaseDate: "2023-01-15",
+      purchasePrice: 100.0,
+      units: 5000,
+      currentPrice: 124.6
+    },
+    {
+      id: "it7",
+      assetName: "Nippon India Gold ETF (Gold)",
+      assetType: "gold",
+      purchaseDate: "2024-08-15",
+      purchasePrice: 50.0,
+      units: 3000,
+      currentPrice: 62.4
+    },
+    {
+      id: "it8",
+      assetName: "Motilal Oswal Nasdaq 100 FOF (Intl)",
+      assetType: "intl",
+      purchaseDate: "2024-10-02",
+      purchasePrice: 100.0,
+      units: 2000,
+      currentPrice: 110.8
+    }
   ]
 };

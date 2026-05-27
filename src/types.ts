@@ -57,6 +57,16 @@ export interface Notification {
   time: string;
 }
 
+export interface InvestmentTransaction {
+  id: string;
+  assetName: string;
+  assetType: "equity" | "debt" | "gold" | "intl";
+  purchaseDate: string; // YYYY-MM-DD
+  purchasePrice: number;
+  units: number;
+  currentPrice: number;
+}
+
 export interface UserFinancialState {
   income: number;
   spending: number;
@@ -70,7 +80,9 @@ export interface UserFinancialState {
   wealth: AssetAllocation[];
   transactions: Transaction[];
   notifications: Notification[];
+  investmentTransactions: InvestmentTransaction[];
 }
+
 
 export interface SimulationResult {
   savingsImpact: string;
